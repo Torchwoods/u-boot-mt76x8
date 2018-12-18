@@ -1,0 +1,15 @@
+*.o
+*.a
+*.bak
+*.bin
+*~
+*.elf
+.menuconfig.log
+.tmp_config
+.config
+.config.old
+*.depend
+*.map
+*.srec
+mkimage
+u-boot
