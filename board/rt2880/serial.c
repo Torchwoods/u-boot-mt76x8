@@ -215,6 +215,10 @@ void serial_setbrg (void)
     defined(MT7620_ASIC_BOARD) || defined(MT7620_FPGA_BOARD) || \
     defined(MT7628_ASIC_BOARD) || defined(MT7628_FPGA_BOARD)
 	clock_divisor = (40*1000*1000/ SERIAL_CLOCK_DIVISOR / CONFIG_BAUDRATE);
+	
+	if (CONFIG_BAUDRATE == 115200)
+		clock_divisor = 22;
+	
 #elif  defined(MT7621_ASIC_BOARD) || defined(MT7621_FPGA_BOARD)
 	clock_divisor = (50 * 1000*1000/ SERIAL_CLOCK_DIVISOR / CONFIG_BAUDRATE);
 #else
