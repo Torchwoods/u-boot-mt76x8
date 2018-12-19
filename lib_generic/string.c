@@ -22,7 +22,7 @@
 
 /* in order to save flash space, we declare below definition here.
  * please modify it if you need below function */
-#ifndef CONFIG_MIPS16
+//#ifndef CONFIG_MIPS16
 #define __HAVE_ARCH_STRNICMP
 #define __HAVE_ARCH_STRNICMP
 #define __HAVE_ARCH_STRCPY
@@ -39,9 +39,9 @@
 #define __HAVE_ARCH_STRSWAB
 #define __HAVE_ARCH_BCOPY
 #define __HAVE_ARCH_MEMSCAN
-#define __HAVE_ARCH_STRSTR
+//#define __HAVE_ARCH_STRSTR
 #define __HAVE_ARCH_MEMCHR
-#endif
+//#endif
 #ifndef __HAVE_ARCH_STRNICMP
 /**
  * strnicmp - Case insensitive, length-limited string comparison

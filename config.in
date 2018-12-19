@@ -1308,7 +1308,8 @@ if [ "$MT7621_DDR_400MHZ" = "y" ]; then
     define_hex  MT7621_DDR_SPEED    41
 fi
 
-choice 'CPU Frequency' " 880Mhz MT7621_CPU_880MHZ \
+choice 'CPU Frequency' "900Mhz MT7621_CPU_900MHZ \
+						880Mhz MT7621_CPU_880MHZ \
 						875Mhz MT7621_CPU_875MHZ \
 		   				800Mhz MT7621_CPU_800MHZ \
 						500Mhz MT7621_CPU_500MHZ \

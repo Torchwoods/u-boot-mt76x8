@@ -130,6 +130,13 @@ static char  file_name_space[ARGV_LEN];
 __attribute__((nomips16)) void dram_cali(void);
 #endif
 
+
+void gpio_init(void);
+void led_on(void);
+void led_off(void);
+int detect_wps(void);
+void gpio_test( void );
+
 static void Init_System_Mode(void)
 {
 	u32 reg;
@@ -300,7 +307,7 @@ static void Init_System_Mode(void)
 		mips_cpu_feq = ((RALINK_REG(RALINK_SYSCTL_BASE+0x10)>>6)&0x1) ? (40*1000*1000)/CPU_FRAC_DIV \
 					   : (25*1000*1000)/CPU_FRAC_DIV;
 	}else {
-		mips_cpu_feq = (575*1000*1000)/CPU_FRAC_DIV;
+		mips_cpu_feq = (580*1000*1000)/CPU_FRAC_DIV;
 	}
 	mips_bus_feq = mips_cpu_feq/3;
 #elif defined(MT7621_ASIC_BOARD)
@@ -535,7 +542,7 @@ static int init_func_ram (void)
 static int display_banner(void)
 {
    
-	printf ("\n\n%s\n\n", version_string);
+	printf ("\n\nYunYin V1.0.0\n\n");
 	return (0);
 }
 
@@ -882,6 +889,8 @@ __attribute__((nomips16)) void board_init_f(ulong bootflag)
 #define SEL_LOAD_LINUX_WRITE_FLASH      2
 #define SEL_BOOT_FLASH                  3
 #define SEL_ENTER_CLI                   4
+#define SEL_LED_TEXT					5
+#define SEL_WEB_FAILSAFE				6
 #define SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL 7
 #define SEL_LOAD_BOOT_SDRAM             8
 #define SEL_LOAD_BOOT_WRITE_FLASH       9
@@ -896,6 +905,9 @@ void OperationSelect(void)
 #ifdef RALINK_CMDLINE
 	printf("   %d: Entr boot command line interface.\n", SEL_ENTER_CLI);
 #endif // RALINK_CMDLINE //
+	printf("   %d: Entr ALL LED test mode.\n",SEL_LED_TEXT);
+	printf("   %d: Entr Web failsafe mode.\n",SEL_WEB_FAILSAFE);
+
 #ifdef RALINK_UPGRADE_BY_SERIAL
 	printf("   %d: Load Boot Loader code then write to Flash via Serial. \n", SEL_LOAD_BOOT_WRITE_FLASH_BY_SERIAL);
 #endif // RALINK_UPGRADE_BY_SERIAL //
@@ -1960,7 +1972,31 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	    s = getenv ("bootdelay");
 	    timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 	}
-
+	
+/*web failsafe*/
+	gpio_init();
+	led_off();
+	printf( "\nif you press the WPS button will automatically enter the Update mode\n");
+	int counter = 0;
+	for(i=0;i<10;i++){
+		udelay(150000);
+		printf( "\n%d",i);
+		if(detect_wps())
+		{
+		led_on();
+		counter++;
+		break;
+		}
+	}
+	
+	if ( counter ) {
+		printf( "\n\nHTTP server is starting for update...\n\n");
+		eth_initialize(gd->bd);
+		//NetLoopHttpd();
+		run_command("uip start", 0); //add by mleaf
+	}
+	
+/*failsafe end!*/
 	OperationSelect();   
 	while (timer1 > 0) {
 		--timer1;
@@ -1969,7 +2005,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 			if ((my_tmp = tstc()) != 0) {	/* we got a key press	*/
 				timer1 = 0;	/* no more delay	*/
 				BootType = getc();
-				if ((BootType < '0' || BootType > '5') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
+				if ((BootType < '0' || BootType > '6') && (BootType != '7') && (BootType != '8') && (BootType != '9'))
 					BootType = '3';
 				printf("\n\rYou choosed %c\n\n", BootType);
 				break;
@@ -2100,6 +2136,14 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 			for (;;) {					
 				main_loop ();
 			}
+			break;
+		case '5':
+			gpio_test();
+			break;
+		case '6':
+			eth_initialize(gd->bd);
+				run_command("uip start", 0); //add by mleaf
+			//NetLoopHttpd();
 			break;
 #endif // RALINK_CMDLINE //
 #ifdef RALINK_UPGRADE_BY_SERIAL
@@ -3273,3 +3317,118 @@ FINAL:
 	return ;
 }
 #endif /* #defined (CONFIG_DDR_CAL) */
+
+//wled_n GPIO44 WLAN_AN_MODE 2b01
+//WDT GPIO38 WDT_MODE 1b1
+void gpio_init(void)
+{
+	u32 val;
+	printf( "MT7688 gpio init : wled and wdt by mango\n" );
+	//set gpio2_mode 1:0=2b01 wled,p1,p2,p3,p4 is gpio.p0 is ephy
+	val = 0x551;
+	RALINK_REG(0xb0000634)=0x0f<<7;
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x64)=val;
+	//gpio44 output gpio_ctrl_1 bit3=1
+	val=RALINK_REG(RT2880_REG_PIODIR+0x04);
+	val|=1<<12;
+	RALINK_REG(RT2880_REG_PIODIR+0x04)=val;
+	//set gpio1_mode 14=1b1	
+	val=RALINK_REG(RT2880_SYS_CNTL_BASE+0x60);	
+	val|=1<<14;
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x60)=val;
+	//gpio38 input gpio_ctrl_1 bit5=0
+	val=RALINK_REG(RT2880_REG_PIODIR+0x04);	
+	val&=~1<<6;
+	RALINK_REG(RT2880_REG_PIODIR+0x04)=val;	
+}
+void led_on( void )
+{
+	//gpio44 gpio_dclr_1 644 clear bit12
+	RALINK_REG(0xb0000644)=1<<12;
+}
+
+void led_off( void )
+{
+	//gpio44 gpio_dset_1 634 set bit12
+	RALINK_REG(0xb0000634)=1<<12;
+}
+
+int detect_wps( void )
+{
+	u32 val;
+	val=RALINK_REG(0xb0000624);//624
+	if(val&1<<6){
+		return 0;
+	}
+	else{
+		printf("wps button pressed!\n");
+		return 1;
+	}
+}
+
+void gpio_test( void )
+{
+	u32 agpio_cfg,gpio1_mode,gpio2_mode,val; 
+	u32 gpio_ctrl0,gpio_ctrl1,gpio_dat0,gpio_dat1;
+	u8 i=0;
+	agpio_cfg = RALINK_REG(RT2880_SYS_CNTL_BASE+0x3c);
+	gpio1_mode= RALINK_REG(RT2880_SYS_CNTL_BASE+0x60);
+	gpio2_mode= RALINK_REG(RT2880_SYS_CNTL_BASE+0x64);
+	gpio_ctrl0= RALINK_REG(0xb0000600);
+	gpio_ctrl1= RALINK_REG(0xb0000604);
+	gpio_dat0 = RALINK_REG(0xb0000620);
+	gpio_dat1 = RALINK_REG(0xb0000624);
+	//agpio
+	val=0;
+	val|=0x0f<<17;//ephy p1-p4 selection digital PAD
+	val|=0x1f;//refclk,i2s digital PAD
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x3c)=val;
+	//gpio1_mode
+	val=0;
+	val|=0x05<<28;//pwm0,pwm1
+	val|=0x05<<24;//uart1,uart2
+	val|=0x01<<20;//i2c_mode
+	val|=0x01<<18;//refclk
+	val|=0x01<<14;//wdt_mode
+	val|=0x01<<10;//sd_mode
+	val|=0x01<<6;//i2s
+	val|=0x01<<4;//cs1
+	val|=0x01<<2;//spis
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x60)=val;
+	//gpio2_mode
+	val=0;
+	val|=0x01<<10;//p4 led
+	val|=0x01<<8;//p3 led
+	val|=0x01<<6;//p2 led
+	val|=0x01<<4;//p1 led
+	val|=0x01<<2;//p0 led
+	val|=0x01<<0;//wled
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x64)=val;
+	//ctrl0,ctrl1
+	RALINK_REG(0xb0000600)=0xffffffff;
+	RALINK_REG(0xb0000604)=0xffffffff;
+	RALINK_REG(0xb0000604)&=~(0x01<<6);
+
+	udelay(600000);
+	for(i=0;i<100;i++){
+	printf("\nall led off\n");
+	RALINK_REG(0xb0000620)=0xffffffff;
+	RALINK_REG(0xb0000624)=0xffffffff;
+	udelay(200000);
+	printf("\nall led on\n");
+	RALINK_REG(0xb0000620)=0x0;
+	RALINK_REG(0xb0000624)=0x0;
+	udelay(200000);
+	
+	if(detect_wps())
+		break;
+	}
+	
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x3c)=agpio_cfg;
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x60)=gpio1_mode;
+	RALINK_REG(RT2880_SYS_CNTL_BASE+0x64)=gpio2_mode;
+	RALINK_REG(0xb0000600)=gpio_ctrl0;
+	RALINK_REG(0xb0000604)=gpio_ctrl1;
+	RALINK_REG(0xb0000620)=gpio_dat0;
+	RALINK_REG(0xb0000624)=gpio_dat1;
+}

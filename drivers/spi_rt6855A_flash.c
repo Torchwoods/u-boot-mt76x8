@@ -805,6 +805,13 @@ static int raspi_4byte_mode(int enable)
 		}
 		retval = bbu_spic_trans(code, 0, NULL, 1, 0, 0);
 #endif
+		// for Winbond's W25Q256FV, need to clear extend address register
+		if ((!enable) && (spi_chip_info->id == 0xef))
+		{
+			u8 code = 0x0;
+			raspi_write_enable();
+			raspi_write_rg(0xc5, &code);
+		}
 		if (retval != 0) {
 			printf("%s: ret: %x\n", __func__, retval);
 			return -1;
