@@ -1992,11 +1992,11 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	if ( counter ) {
 		printf( "\n\nHTTP server is starting for update...\n\n");
 		eth_initialize(gd->bd);
-		//NetLoopHttpd();
 		run_command("uip start", 0); //add by mleaf
 	}
 	
 /*failsafe end!*/
+
 	OperationSelect();   
 	while (timer1 > 0) {
 		--timer1;
@@ -2014,6 +2014,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 		}
 		printf ("\b\b\b%2d ", timer1);
 	}
+	
 	putc ('\n');
 	if(BootType == '3') {
 		char *argv[2];
@@ -2142,8 +2143,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 			break;
 		case '6':
 			eth_initialize(gd->bd);
-				run_command("uip start", 0); //add by mleaf
-			//NetLoopHttpd();
+			run_command("uip start", 0); 
 			break;
 #endif // RALINK_CMDLINE //
 #ifdef RALINK_UPGRADE_BY_SERIAL

@@ -434,7 +434,7 @@ void main_loop (void)
 # endif
 	// something goes wrong!
 	printf("\n## Error: failed to boot linux !\nHTTPD server is starting...##\n\n");
-	run_command("uip start", 0);//add by mleaf start uip
+	run_command("uip start", 0);
 	}
 
 # ifdef CONFIG_MENUKEY
