@@ -1977,6 +1977,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	gpio_init();
 	led_off();
 	printf( "\nif you press the WPS button will automatically enter the Update mode\n");
+#if 0	
 	int counter = 0;
 	for(i=0;i<10;i++){
 		udelay(150000);
@@ -1994,9 +1995,12 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 		eth_initialize(gd->bd);
 		run_command("uip start", 0); //add by mleaf
 	}
+#endif	
 	
 /*failsafe end!*/
-
+	
+	//unsigned char wps = 0;
+	
 	OperationSelect();   
 	while (timer1 > 0) {
 		--timer1;
@@ -2012,6 +2016,14 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 			}
 			udelay (10000);
 		}
+		
+		/*web failsafe*/
+		if(detect_wps())
+		{
+			BootType = '0';
+			break;
+		}
+		
 		printf ("\b\b\b%2d ", timer1);
 	}
 	
@@ -2022,6 +2034,22 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 		argv[1] = &addr_str[0];
 		printf("   \n3: System Boot system code via Flash.\n");
 		do_bootm(cmdtp, 0, 2, argv);
+	}
+	else if (BootType == '0')
+	{
+		unsigned char idx = 0;
+		printf( "\n\nHTTP server is starting for update...\n\n");
+		//led flash
+		for(idx = 0;idx < 10;idx++)
+		{
+				led_on();
+				udelay(100000);
+				led_off();
+				udelay(100000);
+		}
+		
+		eth_initialize(gd->bd);
+		run_command("uip start", 0); 
 	}
 	else {
 		char *argv[4];
@@ -3323,7 +3351,7 @@ FINAL:
 void gpio_init(void)
 {
 	u32 val;
-	printf( "MT7688 gpio init : wled and wdt by mango\n" );
+	printf( "\nMT7688 gpio init : wled and wdt \n" );
 	//set gpio2_mode 1:0=2b01 wled,p1,p2,p3,p4 is gpio.p0 is ephy
 	val = 0x551;
 	RALINK_REG(0xb0000634)=0x0f<<7;
@@ -3341,6 +3369,7 @@ void gpio_init(void)
 	val&=~1<<6;
 	RALINK_REG(RT2880_REG_PIODIR+0x04)=val;	
 }
+
 void led_on( void )
 {
 	//gpio44 gpio_dclr_1 644 clear bit12
@@ -3361,7 +3390,7 @@ int detect_wps( void )
 		return 0;
 	}
 	else{
-		printf("wps button pressed!\n");
+		printf("\nwps button pressed!\n");
 		return 1;
 	}
 }
