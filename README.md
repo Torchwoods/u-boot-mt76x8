@@ -1,5 +1,4 @@
-# u-boot-mt76x8
-## uboot for mt76x8 V1.0.0
+# u-boot-mt76x8 for mt76x8 V1.0.0
 
 ***
 # Download
