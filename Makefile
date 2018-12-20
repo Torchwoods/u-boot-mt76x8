@@ -191,7 +191,7 @@ LIBS += cpu/$(CPU)/$(SOC)/lib$(SOC).a
 endif
 LIBS += lib_$(ARCH)/lib$(ARCH).a
 LIBS += net/libnet.a
-
+LIBS += uip/libuip.a
 #LIBS += rtc/librtc.a
 LIBS += drivers/libdrivers.a
 
@@ -1811,7 +1811,7 @@ clean:
 	rm -f board/cray/L1/bootscript.c board/cray/L1/bootscript.image
 	rm -f board/trab/trab_fkt
 	rm -f stage1/stage2.bin stage1/stage1n2.elf stage1/stage1n2.map
-	rm -f ./uboot.bin ./uboot.img ./u-boot ./u-boot.* ./uboot_a.bin ./System.map
+	rm -f ./uboot.bin ./uboot.img ./u-boot ./u-boot.* ./uboot_a.bin ./System.map ./httpd/fsdata.c
 	rm -f scripts/lxdialog/lxdialog
 
 clobber:	clean

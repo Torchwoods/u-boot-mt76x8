@@ -75,6 +75,9 @@
 #include "tftp.h"
 #include "rarp.h"
 //#include "nfs.h"
+
+/* for web failsafe mod */
+
 #include <asm/addrspace.h>
 #undef DEBUG
 #ifdef CONFIG_STATUS_LED
@@ -94,6 +97,18 @@
 #if 0
 #define ET_DEBUG
 #endif
+
+/**uip **/
+extern int NetUipLoop;
+void dev_received(volatile uchar * inpkt, int len);
+
+/* for web failsafe mod , added by mango 20150525 */
+unsigned char *webfailsafe_data_pointer = NULL;
+int	webfailsafe_is_running = 0;
+int	webfailsafe_ready_for_upgrade = 0;
+int	webfailsafe_upgrade_type = WEBFAILSAFE_UPGRADE_TYPE_FIRMWARE;
+void NetReceiveHttpd( volatile uchar * inpkt, int len );
+extern int do_reset( cmd_tbl_t *cmdtp, int flag, int argc, char *argv[] );
 
 /** BOOTP EXTENTIONS **/
 
@@ -1157,7 +1172,17 @@ NetReceive(volatile uchar * inpkt, int len)
 #ifdef ET_DEBUG
 	printf("packet received\n");
 #endif
-
+/*
+	if ( webfailsafe_is_running ) {
+	        NetReceiveHttpd( inpkt, len );
+	         return;
+	}
+*/
+	 if(NetUipLoop) {
+		dev_received(inpkt, len);
+		return;
+	}
+		
 	NetRxPkt = inpkt;
 	NetRxPktLen = len;
 	et = (Ethernet_t *)inpkt;
