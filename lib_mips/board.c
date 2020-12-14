@@ -510,7 +510,7 @@ static int init_func_ram (void)
 #else
 	int board_type = 0;	/* use dummy arg */
 #endif
-	puts ("DRAM:  ");
+	puts ("\nDRAM:  ");
 
 /*init dram config*/
 #ifdef RALINK_DDR_OPTIMIZATION
@@ -541,8 +541,9 @@ static int init_func_ram (void)
 
 static int display_banner(void)
 {
-   
-	printf ("\n YunYin V1.0.0\n\n");
+	printf("============================================\n");
+	printf("YunYin Uboot Version V1.0.0     \n");
+	printf("============================================\n");
 	return (0);
 }
 
@@ -877,7 +878,9 @@ __attribute__((nomips16)) void board_init_f(ulong bootflag)
 	debug ("relocate_code Pointer at: %08lx\n", addr);
 	relocate_code (addr_sp, id, /*TEXT_BASE*/ addr);	
 #else
+#ifdef DEBUG
 	debug ("relocate_code Pointer at: %08lx\n", addr);
+#endif
 	relocate_code (addr_sp, id, addr);
 #endif
 
@@ -1528,6 +1531,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 #endif //CFG_ENV_IS_IN_FLASH
 
 #if defined(MT7628_ASIC_BOARD)
+
 	/* Enable ePA/eLNA share pin */
 	{
 		char ee35, ee36;
@@ -1921,7 +1925,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 
 #endif
 
-	debug("\n ##### The CPU freq = %d MHZ #### \n",mips_cpu_feq/1000/1000);
+	debug("\n##### The CPU freq = %d MHZ #### \n",mips_cpu_feq/1000/1000);
 
 /*
 	if(*(volatile u_long *)(RALINK_SYSCTL_BASE + 0x0304) & (1<< 24))
@@ -1933,7 +1937,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 		debug("\nSDRAM bus set to 16 bit \n");
 	}
 */
-	debug(" estimate memory size =%d Mbytes\n",gd->ram_size /1024/1024 );
+	debug("estimate memory size =%d Mbytes\n",gd->ram_size /1024/1024 );
 
 #if defined (RT3052_ASIC_BOARD) || defined (RT3052_FPGA_BOARD)  || \
     defined (RT3352_ASIC_BOARD) || defined (RT3352_FPGA_BOARD)  || \
@@ -1973,7 +1977,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	    timer1 = s ? (int)simple_strtol(s, NULL, 10) : CONFIG_BOOTDELAY;
 	}
 	
-/*web failsafe*/
+	/*web failsafe*/
 	gpio_init();
 	led_off();
 	printf( "\nif you press the WPS button will automatically enter the Update mode\n");
@@ -1997,7 +2001,7 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	}
 #endif	
 	
-/*failsafe end!*/
+	/*failsafe end!*/
 	
 	//unsigned char wps = 0;
 	
@@ -3338,9 +3342,12 @@ MIN_FAILED:
 	
 	
 FINAL:
+
+#if 0
 		for (j = 0; j < 2; j++)	
 			cal_debug("[%02X%02X%02X%02X]",min_coarse_dqs[j],min_fine_dqs[j], max_coarse_dqs[j],max_fine_dqs[j]);
 		cal_debug("\nDDR Calibration DQS reg = %08X\n",reg);
+#endif
 
 	return ;
 }
@@ -3351,9 +3358,39 @@ FINAL:
 void gpio_init(void)
 {
 	u32 val;
-	printf( "\nMT7688 gpio init : wled and wdt \n" );
+	printf( "\nMT7688 GPIO Init\n" );
 	//set gpio2_mode 1:0=2b01 wled,p1,p2,p3,p4 is gpio.p0 is ephy
-	val = 0x551;
+	val = RALINK_REG(RT2880_AGPIOCFG_REG);
+	val |= 0x01 << 4; // REF_CLKO_AIO_EN
+	RALINK_REG(RT2880_AGPIOCFG_REG) = val;
+
+	//GPIO1_MODE
+	val = RALINK_REG(RT2880_GPIOMODE_REG);
+	val |=(0x01<<2)|((0x01 << 14) | (0x01<<18)) | (0x01<<26) |(0x01<<28) | (0x01<<30);
+	RALINK_REG(RT2880_GPIOMODE_REG) = val;
+
+	//GPIO
+	val = RALINK_REG(RT2880_REG_PIODIR+0x04);
+	val |=  ((0x01<<5) | (0x3f<<7));
+	RALINK_REG(RT2880_REG_PIODIR+0x04) = val;
+	//GPIO14-GPIO21 OUT
+	val = RALINK_REG(RT2880_REG_PIODIR);
+	val |=  (0xFF<<14);
+	RALINK_REG(RT2880_REG_PIODIR) = val;
+
+	//GPIO38 INPUT
+	//gpio38 input gpio_ctrl_1 bit5=0
+	val = RALINK_REG(RT2880_REG_PIODIR+0x04);	
+	val &= ~(0x1<<6);
+	RALINK_REG(RT2880_REG_PIODIR+0x04)=val;	
+
+	//SET GPIO OUT VALUE
+	RALINK_REG(RT2880_REG_PIORESET) = (0xFF<<14); //output 0
+	RALINK_REG(RT2880_REG_PIORESET+0x04) = ((0x01<<5) | (0x3f<<7)); 
+
+
+#if 0	
+	val = 0x555;
 	RALINK_REG(0xb0000634)=0x0f<<7;
 	RALINK_REG(RT2880_SYS_CNTL_BASE+0x64)=val;
 	//gpio44 output gpio_ctrl_1 bit3=1
@@ -3364,34 +3401,31 @@ void gpio_init(void)
 	val=RALINK_REG(RT2880_SYS_CNTL_BASE+0x60);	
 	val|=1<<14;
 	RALINK_REG(RT2880_SYS_CNTL_BASE+0x60)=val;
-	//gpio38 input gpio_ctrl_1 bit5=0
-	val=RALINK_REG(RT2880_REG_PIODIR+0x04);	
-	val&=~1<<6;
-	RALINK_REG(RT2880_REG_PIODIR+0x04)=val;	
+#endif	
+	
 }
 
 void led_on( void )
 {
 	//gpio44 gpio_dclr_1 644 clear bit12
-	RALINK_REG(0xb0000644)=1<<12;
+	RALINK_REG(RT2880_REG_PIORESET+0x04)=0x01<<7;
 }
 
 void led_off( void )
 {
 	//gpio44 gpio_dset_1 634 set bit12
-	RALINK_REG(0xb0000634)=1<<12;
+	RALINK_REG(RT2880_REG_PIOSET+0x04)=0x1<<7;
 }
 
 int detect_wps( void )
 {
 	u32 val;
-	val=RALINK_REG(0xb0000624);//624
-	if(val&1<<6){
-		return 0;
-	}
-	else{
+	val=RALINK_REG(RT2880_REG_PIODATA+0x04);//624
+	if(val&(1<<6)){
 		printf("\nwps button pressed!\n");
 		return 1;
+	}else{
+		return 0;
 	}
 }
 
