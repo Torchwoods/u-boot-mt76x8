@@ -6,11 +6,11 @@
 	# git clone https://github.com/Ying-Yun/u-boot-mt76x8.git
 
 # How to use
-* 1.make menuconfig
+* 1.make menuconfig ARCH=mips
 * 2.select MT7628 board
 * 3.select DRAM Tyep -> DDR2
 * 4.select DDR Component
-* 5.make clean;make
+* 5.make clean;make ARCH=mips CROSS_COMPILE=mipsel-linux-
 
 # Note
 * Press 'WPS(gpio38)' button when power on, then enter the failsafe web mode.
