@@ -1812,8 +1812,6 @@ void mt7628_ephy_init(void)
 	mii_mgr_write(0, 31, 0x4000); //change G4 page
 	mii_mgr_write(0, 29, 0x000d);
 	mii_mgr_write(0, 30, 0x0500);
-
-
 }
 
 #endif
@@ -1838,6 +1836,7 @@ void rt305x_esw_init(void)
 	RALINK_REG(RALINK_ETH_SW_BASE+0x0090) = 0x00007f7f;
 	RALINK_REG(RALINK_ETH_SW_BASE+0x0098) = 0x00007f7f; //disable VLAN
 	RALINK_REG(RALINK_ETH_SW_BASE+0x00CC) = 0x0002500c;
+
 #ifndef CONFIG_UNH_TEST
 	RALINK_REG(RALINK_ETH_SW_BASE+0x009C) = 0x0008a301; //hashing algorithm=XOR48, aging interval=300sec
 #else
@@ -2139,9 +2138,9 @@ void rt305x_esw_init(void)
 #elif defined (MT7628_ASIC_BOARD)
 /*TODO: Init MT7628 ASIC PHY HERE*/
 	i = RALINK_REG(RT2880_AGPIOCFG_REG);
-#if defined (CONFIG_ETH_ONE_PORT_ONLY)
-        i |= MT7628_EPHY_EN;
-        i = i & ~(MT7628_P0_EPHY_AIO_EN);
+#if defined (ETH_ONE_PORT_ONLY)
+    i |= MT7628_EPHY_EN;
+    i = i & ~(MT7628_P0_EPHY_AIO_EN);
 #else
 	i = i & ~(MT7628_EPHY_EN);
 #endif
@@ -2155,15 +2154,15 @@ void rt305x_esw_init(void)
 	i = i & ~(RSTCTRL_EPHY_RST);
 	RALINK_REG(RT2880_RSTCTRL_REG) = i;
 	i = RALINK_REG(RALINK_SYSCTL_BASE + 0x64);
-#if defined (CONFIG_ETH_ONE_PORT_ONLY)
-        i &= 0xf003f003;
-        i |= 0x05540554;
+#if defined (ETH_ONE_PORT_ONLY)
+        i &= 0xf000f000;
+        i |= 0x05550555;
         RALINK_REG(RALINK_SYSCTL_BASE + 0x64) = i; // set P0 EPHY LED mode
 #else	
 	i &= 0xf003f003;
 	RALINK_REG(RALINK_SYSCTL_BASE + 0x64) = i;
 #endif
-      
+    
 	udelay(5000);
 	mt7628_ephy_init();
 
