@@ -542,7 +542,7 @@ static int init_func_ram (void)
 static int display_banner(void)
 {
 	printf("============================================\n");
-	printf("YunYin Uboot Version V1.0.0     \n");
+	printf("====    YunYinKJ Uboot Version V1.0.0   ====\n");
 	printf("============================================\n");
 	return (0);
 }
@@ -1421,10 +1421,10 @@ __attribute__((nomips16)) void board_init_r (gd_t *id, ulong dest_addr)
 	void config_usb_mtk_xhci();
 	config_usb_mtk_xhci();
 #endif
-#if defined (MT7620_ASIC_BOARD) || defined (MT7628_ASIC_BOARD)
+//#if defined (MT7620_ASIC_BOARD) || defined (MT7628_ASIC_BOARD)
 	void disable_pcie();
 	disable_pcie();
-#endif
+//#endif
 
 	u32 reg = RALINK_REG(RT2880_RSTSTAT_REG);
 	if(reg & RT2880_WDRST ){
