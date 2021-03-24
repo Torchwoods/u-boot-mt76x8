@@ -983,7 +983,7 @@ struct chip_info *chip_prob(void)
 	jedec = (u32)((u32)(buf[1] << 24) | ((u32)buf[2] << 16) | ((u32)buf[3] <<8) | (u32)buf[4]);
 
 #ifdef BBU_MODE
-	printf("flash manufacture id: %x, device id %x %x\n", buf[0], buf[1], buf[2]);
+	//printf("flash manufacture id: %x, device id %x %x\n", buf[0], buf[1], buf[2]);
 #else
 	printf("spi device id: %x %x %x %x %x (%x)\n", buf[0], buf[1], buf[2], buf[3], buf[4], jedec);
 #endif
@@ -1001,7 +1001,7 @@ struct chip_info *chip_prob(void)
 			if (info->jedec_id == jedec)
 #endif
 			{
-				printf("find flash: %s\n", info->name);
+				printf("Flash: %s\n", info->name);
 				return info;
 			}
 
