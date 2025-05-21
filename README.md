@@ -5,6 +5,11 @@
 
 	# git clone https://github.com/Ying-Yun/u-boot-mt76x8.git
 
+#编译工具设置
+* 解压buildroot-gcc342.tar.bz2
+* 安装依赖库
+	sudo apt-get install libstdc++6:i386
+	sudo apt-get install libSM6:i386
 # How to use
 * 1.make menuconfig ARCH=mips
 * 2.select MT7628 board
